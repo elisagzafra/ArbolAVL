@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Arboles;
+package ArbolAVL;
 
 import java.util.*;
 
@@ -13,11 +13,9 @@ import java.util.*;
  */
 public class ArbolAVL<T extends Comparable<T>>  {
     Nodo<T> raiz;
-    int cont;
+    int cont=0;
 
     public ArbolAVL() {
-        this.raiz=null;
-        cont=0;
     }
 
     public ArbolAVL(T elem) {
@@ -30,7 +28,10 @@ public class ArbolAVL<T extends Comparable<T>>  {
     }
     
     public int altura(Nodo<T> n) {
-        return n.altura();
+        if(n==null)
+            return 0;
+        else
+            return altura(n.izq)-altura(n.der);
     }
     
     public boolean isEmpty() {
@@ -58,60 +59,57 @@ public class ArbolAVL<T extends Comparable<T>>  {
     }
     
     public void inserta(T elem){
-        Nodo<T> actual=raiz;
         Nodo<T> nuevo=new Nodo<T>(elem);
-        if(raiz==null){
+        if(raiz==null)
             raiz=nuevo;
+        Nodo<T> actual=raiz;
+        Nodo<T> papa = null;
+        boolean encontre = false;
+        while(actual!=null && !encontre){
+            papa=actual;
+            if(elem.compareTo(actual.dato)<0)
+                actual=actual.izq;
+            else{
+               if(elem.compareTo(actual.dato)==0)
+                   encontre=true;
+               else
+                   actual=actual.der;
+            }
         }
-        else{
-            Nodo<T> papa = actual;
-            boolean encontre = false;
-            while(actual!=null && !encontre){
-                papa=actual;
-                if(elem.compareTo(actual.dato)<0){
-                    actual=actual.izq;
-                }
-                else{
-                   if(elem.compareTo(actual.dato)==0){
-                       encontre=true;
-                   } 
-                   else{
-                       actual=actual.der;
-                   }
-                }
+        actual=nuevo;
+        boolean termine = false;
+        if(!encontre){
+            papa.cuelga(actual);
+            cont++;
+            termine=true;
+        }
+        while(!termine){
+            if(papa==raiz){
+                termine=true;
             }
-            boolean termine = false;
-            if(!encontre){
-                actual=papa;
-                actual.cuelga(nuevo);
-                cont++;
-                termine = false;
-            }
-            actual=nuevo;
-            while(!termine){
-                if(actual==raiz){
+            else{
+                papa=actual.papa;
+                if(actual==papa.izq)
+                    papa.fe--;
+                else
+                    papa.fe++;
+                if(papa.fe==0)
+                    termine=true;
+                if(papa.fe==2 || papa.fe==-2){
+                    rota(papa);
+                    if(papa == raiz)
+                        raiz.setPapa(null);
                     termine=true;
                 }
-                else{
-                    papa=actual.papa;
-                    if(actual==papa.izq)
-                        papa.fe--;
-                    else
-                        papa.fe++;
-                    if(papa.fe==2){
-                        rota(papa);
-                        termine=true;
-                    }
-                    if(papa.fe==0)
-                        termine=true;
-                    actual=papa;
-                }
+                actual=papa;
+                papa=papa.papa;
             }
         }
+        
     }
     
     private Nodo<T> rota(Nodo<T> actual) {
-        Nodo<T> alfa,beta,gamma = null,A,B,C,D,papa;
+        Nodo<T> alfa,beta  = null,gamma = null,A,B = null,C = null,D,papa;
         if(actual.fe==-2 && (actual.izq.fe==-1 || actual.izq.fe==0)){ //izq-der
             papa=actual.papa;
             alfa=actual;
@@ -119,20 +117,24 @@ public class ArbolAVL<T extends Comparable<T>>  {
             D=alfa.der;
             A=beta.izq;
             gamma=beta.der;
-            B=gamma.izq;
-            C=gamma.der;
+            if(gamma!=null){
+                B=gamma.izq;
+                C=gamma.der;
+                gamma.cuelga(alfa);
+                gamma.cuelga(beta);
+            }
             beta.cuelga(A);
             beta.cuelga(B);
             alfa.cuelga(C);
             alfa.cuelga(D);
-            gamma.cuelga(alfa);
-            gamma.cuelga(beta);
             papa.cuelga(gamma);
-            alfa.fe=altura(C)-altura(D);
-            gamma.fe=altura(alfa)-altura(beta);
-            if(gamma.fe==-1){
-                alfa.fe=0;
-                gamma.fe=0;
+            alfa.fe=altura(D)-altura(beta);
+            if(gamma!=null){
+                gamma.fe=altura(C)-altura(B);
+                if(gamma.fe==-1){
+                    alfa.fe=0;
+                    gamma.fe=0;
+                }
             }
         }
         return gamma;
@@ -201,7 +203,7 @@ public class ArbolAVL<T extends Comparable<T>>  {
                     papa.fe=+1;
                 else
                     papa.fe=-1;
-                if(papa.fe==2 || papa.fe==-2)
+                if(papa.fe>=2 || papa.fe>=-2)
                     papa=rota(papa);
                 if(papa.fe==1 || papa.fe==-1)
                     termine=true;
@@ -209,22 +211,6 @@ public class ArbolAVL<T extends Comparable<T>>  {
             }
         }
     }
-    private void  balancear(Nodo<T> actualHijo,Nodo<T> actual){//OFICIAL
-        if(actual.izq==actualHijo)
-            actual.fe--;
-        else
-            actual.fe++;
-        if(Math.abs(actual.fe)==2){
-            rota(actual);
-            return;
-        }
-        if(actual==raiz || actual.fe==0)
-            return;
-  
-        balancear(actual, actual.papa);
-}
-    
-    
 
     public void preOrden() {
         preOrden(raiz);
@@ -250,7 +236,7 @@ public class ArbolAVL<T extends Comparable<T>>  {
         if(n==null)
             return;
         inOrden(n.izq);
-        System.out.print(""+n.dato+":"+n.getFe(n)+" ");
+        System.out.print(""+n.dato+" ("+n.getFe(n)+") ");
         inOrden(n.der);
     }
 
@@ -267,7 +253,26 @@ public class ArbolAVL<T extends Comparable<T>>  {
         postOrden(n.der);
         System.out.print(""+n.dato+" ");
     }
-
+    
+        public String toString(){
+        return this.toString(raiz);
+    }
+    
+    private String toString(Nodo<T> n){
+        StringBuilder sb = new StringBuilder();
+        LinkedList<Nodo<T>> c = new LinkedList();
+        c.add(n);
+        Nodo<T> aux;
+        while(!c.isEmpty()){
+            aux = c.remove();
+            sb.append(aux.dato.toString()).append("("+aux.getFe(aux)+") ");
+            if(aux.izq != null)
+                c.add(aux.izq);
+            if(aux.der != null)
+                c.add(aux.der);
+        }
+        return sb.toString();
+    }
     
 
     

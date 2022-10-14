@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Arboles;
+package ArbolAVL;
 
 /**
  *
@@ -59,10 +59,6 @@ public class Nodo<T extends Comparable <T>>{
         this.papa = papa;
     }
 
-    public int getFe() {
-        return fe;
-    }
-
     public void setFe(int fe) {
         this.fe = fe;
     }
@@ -71,16 +67,7 @@ public class Nodo<T extends Comparable <T>>{
         if(n==null)
             return -1;
         else
-            return n.fe;
-    }
-    
-    public int altura(){
-        int alt=0;
-        if(izq!=null)
-            alt+=1+izq.altura();
-        if(der!=null)
-            alt+=1+der.altura();
-        return alt;
+            return getFe(n.der)-getFe(n.izq);
     }
     
     public void eliminaSubarbol(T elem){
